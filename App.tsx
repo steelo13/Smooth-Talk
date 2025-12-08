@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 import Navigation from './components/Navigation';
 import PhotoAnalyzer from './components/PhotoAnalyzer';
 import IcebreakerLab from './components/IcebreakerLab';
 import ConfidenceCoach from './components/ConfidenceCoach';
-import AdUnit from './components/AdUnit';
 import { Zap, Trophy, Lock, Unlock, CheckCircle } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -20,40 +18,42 @@ const App: React.FC = () => {
   const xpToNextLevel = 500;
 
   useEffect(() => {
+    console.log("App Mounted");
+    
     // Load persisted data on mount
-    const savedXp = localStorage.getItem('boldtalk_xp');
-    const savedLevel = localStorage.getItem('boldtalk_level');
-    const savedRead = localStorage.getItem('boldtalk_read_lessons');
-    const savedStart = localStorage.getItem('boldtalk_start_date');
+    try {
+        const savedXp = localStorage.getItem('boldtalk_xp');
+        const savedLevel = localStorage.getItem('boldtalk_level');
+        const savedRead = localStorage.getItem('boldtalk_read_lessons');
+        const savedStart = localStorage.getItem('boldtalk_start_date');
 
-    if (savedXp) setXp(parseInt(savedXp));
-    if (savedLevel) setLevel(parseInt(savedLevel));
-    if (savedRead) {
-        try {
+        if (savedXp) setXp(parseInt(savedXp));
+        if (savedLevel) setLevel(parseInt(savedLevel));
+        if (savedRead) {
             const parsed = JSON.parse(savedRead);
             if (Array.isArray(parsed)) {
                 setReadLessons(new Set<string>(parsed));
             }
-        } catch (e) {
-            console.error("Failed to parse read lessons", e);
         }
-    }
 
-    // Calculate Day / Streak
-    const now = Date.now();
-    if (!savedStart) {
-        localStorage.setItem('boldtalk_start_date', now.toString());
-        setCurrentDay(1);
-    } else {
-        const startTime = parseInt(savedStart);
-        const diffTime = now - startTime;
-        // If time is negative (clock change), default to day 1
-        if (diffTime < 0) {
+        // Calculate Day / Streak
+        const now = Date.now();
+        if (!savedStart) {
+            localStorage.setItem('boldtalk_start_date', now.toString());
             setCurrentDay(1);
         } else {
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            setCurrentDay(Math.min(diffDays, 31));
+            const startTime = parseInt(savedStart);
+            const diffTime = now - startTime;
+            // If time is negative (clock change), default to day 1
+            if (diffTime < 0) {
+                setCurrentDay(1);
+            } else {
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                setCurrentDay(Math.min(diffDays, 31));
+            }
         }
+    } catch (e) {
+        console.error("Error loading state", e);
     }
   }, []);
 
@@ -196,9 +196,6 @@ const App: React.FC = () => {
                  </span>
                </div>
              </div>
-
-             {/* Ad Slot */}
-             <AdUnit slotId="profile_bottom" format="banner" className="mt-8" />
           </div>
         );
       default:

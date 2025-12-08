@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { Tone, AnalysisResult } from '../types';
 import { analyzePhoto } from '../services/geminiService';
 import { Camera, RefreshCw, Copy, Check, Sparkles, MessageCircle, Heart, Lock } from 'lucide-react';
-import AdUnit from './AdUnit';
 
 interface PhotoAnalyzerProps {
   onXpGain: (amount: number) => void;
@@ -63,7 +62,7 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
     <div className="flex flex-col h-full overflow-y-auto pb-24 px-4 pt-4 custom-scrollbar">
       
       {/* Header */}
-      <div className="mb-2 text-center">
+      <div className="mb-4 text-center">
         <h2 className="text-2xl font-bold text-white mb-2 flex items-center justify-center gap-2">
           <MessageCircle className="text-neonPink w-6 h-6" /> 
           Smooth Talker
@@ -73,9 +72,6 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
           Upload a photo of them or a screenshot from social media and get 10 AI-made conversation starters based on their looks and vibe.
         </p>
       </div>
-
-      {/* Ad Slot: Top Banner */}
-      <AdUnit slotId="analyzer_top_banner" />
 
       {/* Upload Section */}
       <div className="bg-darkSurface border border-white/10 rounded-2xl p-4 mb-6 relative overflow-hidden group transition-all hover:border-electricBlue/50 mt-2">
@@ -227,9 +223,6 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
               ))}
             </div>
           </div>
-
-          {/* Ad Slot: Bottom Result */}
-          <AdUnit slotId="analyzer_results_bottom" />
 
           <button 
              onClick={() => setResult(null)}

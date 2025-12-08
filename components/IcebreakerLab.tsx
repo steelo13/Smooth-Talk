@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Scenario, Message } from '../types';
 import { simulateChatResponse } from '../services/geminiService';
 import { Send, User, Bot, Award, ChevronLeft, MessageCircle, Lock } from 'lucide-react';
-import AdUnit from './AdUnit';
 
 interface IcebreakerLabProps {
   onXpGain: (amount: number) => void;
@@ -99,16 +98,13 @@ const IcebreakerLab: React.FC<IcebreakerLabProps> = ({ onXpGain, userLevel }) =>
   if (!activeScenario) {
     return (
       <div className="h-full overflow-y-auto p-4 pb-24 custom-scrollbar">
-        <div className="mb-4 text-center">
+        <div className="mb-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
             <MessageCircle className="text-electricBlue w-5 h-5" /> 
             Icebreaker Lab
             </h2>
             <p className="text-gray-400 text-sm">Practice your skills in safe scenarios</p>
         </div>
-
-        {/* Ad Slot */}
-        <AdUnit slotId="icebreaker_list_top" className="mb-6" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {SCENARIOS.map((scenario) => {

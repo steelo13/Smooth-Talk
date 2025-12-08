@@ -1,7 +1,27 @@
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { AnalysisResult, Tone } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Lazy initialization prevents crash on load if process.env is undefined in browser
+let aiInstance: GoogleGenAI | null = null;
+
+const getAi = () => {
+  if (!aiInstance) {
+    // Safe access to API Key via global process (polyfilled in index.html) or direct access
+    // @ts-ignore - We are accessing the global process polyfill
+    const env = (typeof window !== 'undefined' && window.process) ? window.process.env : (typeof process !== 'undefined' ? process.env : {});
+    
+    // NOTE: This will still fail if API_KEY is not injected by the build environment/server.
+    // In the AI Studio preview, it is injected safely.
+    const apiKey = env.API_KEY || '';
+    
+    if (!apiKey) {
+      console.warn("API Key is missing. AI features will not work.");
+    }
+    
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
 
 const analysisSchema: Schema = {
   type: Type.OBJECT,
@@ -21,6 +41,8 @@ const analysisSchema: Schema = {
 
 export const analyzePhoto = async (base64Image: string, tone: Tone): Promise<AnalysisResult> => {
   try {
+    const ai = getAi();
+    
     // Strip header if present to get pure base64
     const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
 
@@ -56,32 +78,20 @@ export const analyzePhoto = async (base64Image: string, tone: Tone): Promise<Ana
 
 export const simulateChatResponse = async (history: { role: string; text: string }[], scenarioContext: string): Promise<string> => {
   try {
-    // Construct the chat history for the model
-    // We only use text for the simulation to keep it simple and fast
-    const chat = ai.chats.create({
-      model: "gemini-2.5-flash",
-      config: {
-        systemInstruction: `You are roleplaying a character in a specific scenario: "${scenarioContext}". 
-        Reply naturally to the user. Keep responses concise (under 30 words) like a real text message.
-        If the user is awkward, be slightly hesitant but polite. If they are charming, be receptive.`,
-      },
-    });
-
-    // We need to send the history. The SDK manages history in the chat object, 
-    // but since we are stateless in this function, we'll just send the last message 
-    // effectively or rebuild context. For simplicity in this demo, we assume the history 
-    // is managed by the caller if we were using a persistent chat object, 
-    // but here we will just use generateContent with the full transcript for the "next turn".
+    const ai = getAi();
     
-    // Better approach for stateless functional component usage:
-    // Just prompt with the conversation log.
-    
+    // We construct a text transcript for the model to continue the conversation.
     const transcript = history.map(m => `${m.role === 'user' ? 'User' : 'Match'}: ${m.text}`).join('\n');
     const prompt = `${transcript}\nMatch:`;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: prompt,
+      config: {
+        systemInstruction: `You are roleplaying a character in a specific scenario: "${scenarioContext}". 
+        Reply naturally to the user. Keep responses concise (under 30 words) like a real text message.
+        If the user is awkward, be slightly hesitant but polite. If they are charming, be receptive.`,
+      },
     });
 
     return response.text || "...";

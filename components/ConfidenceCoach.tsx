@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Lesson } from '../types';
 import { BookOpen, PlayCircle, Lock, ChevronDown, CheckCircle, Clock, Calendar, Zap } from 'lucide-react';
-import AdUnit from './AdUnit';
 
 interface CoachProps {
   currentDay: number;
@@ -171,7 +170,7 @@ const ConfidenceCoach: React.FC<CoachProps> = ({ currentDay, readLessons, onLess
 
   return (
     <div className="h-full overflow-y-auto px-4 pt-4 pb-24 custom-scrollbar relative">
-      <div className="mb-4 text-center">
+      <div className="mb-6 text-center">
         <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
           <BookOpen className="text-neonPink w-5 h-5" /> 
           31-Day Confidence Plan
@@ -183,9 +182,6 @@ const ConfidenceCoach: React.FC<CoachProps> = ({ currentDay, readLessons, onLess
             <span className="text-white font-bold text-sm">Current Day: {currentDay}</span>
         </div>
       </div>
-
-      {/* Ad Slot */}
-      <AdUnit slotId="coach_top" className="mb-6" />
 
       <div className="space-y-8">
         {daysArray.map((dayNum) => {
