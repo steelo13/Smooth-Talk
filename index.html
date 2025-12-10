@@ -38,14 +38,25 @@
           const isStartup = root.children.length === 0 || root.innerText.includes("Loading BoldTalk");
           
           if (isStartup) {
-            root.innerHTML = `
-              <div style="color: #ff4fcf; padding: 20px; font-family: monospace; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0f0f1a;">
-                <h2 style="font-size: 20px; margin-bottom: 15px; font-weight: bold;">${title}</h2>
-                <p style="color: white; background: #333; padding: 15px; border-radius: 8px; max-width: 400px; line-height: 1.5;">${message}</p>
-                <p style="color: #4ade80; font-size: 14px; margin-top: 15px; font-weight: bold;">💡 Fix: ${tip}</p>
-                ${!isFileProtocol ? '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #2c1063; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload</button>' : ''}
-              </div>
-            `;
+            // DEBOUNCE: Wait 1s to see if React recovers/mounts anyway. 
+            // Prevents flickering error screen on non-fatal startup errors (common on mobile).
+            setTimeout(() => {
+                const currentRoot = document.getElementById('root');
+                // Check if we are still in the loading state. 
+                // If React mounted, currentRoot.innerText will likely contain app content, not "Loading BoldTalk".
+                const stillLoading = currentRoot && (currentRoot.innerText.includes("Loading BoldTalk") || currentRoot.children.length === 0);
+                
+                if (stillLoading) {
+                    currentRoot.innerHTML = `
+                      <div style="color: #ff4fcf; padding: 20px; font-family: monospace; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0f0f1a;">
+                        <h2 style="font-size: 20px; margin-bottom: 15px; font-weight: bold;">${title}</h2>
+                        <p style="color: white; background: #333; padding: 15px; border-radius: 8px; max-width: 400px; line-height: 1.5;">${message}</p>
+                        <p style="color: #4ade80; font-size: 14px; margin-top: 15px; font-weight: bold;">💡 Fix: ${tip}</p>
+                        ${!isFileProtocol ? '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #2c1063; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload</button>' : ''}
+                      </div>
+                    `;
+                }
+            }, 1000);
           } else {
              console.error("Runtime Error:", message);
           }
