@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Tone, AnalysisResult } from '../types';
 import { analyzePhoto } from '../services/geminiService';
-import { Camera, RefreshCw, Copy, Check, Sparkles, MessageCircle, Heart, Lock, Loader2 } from 'lucide-react';
+import { Camera, RefreshCw, Copy, Check, Sparkles, MessageCircle, Heart, Lock, Loader2, Link as LinkIcon, ArrowRight } from 'lucide-react';
 
 interface PhotoAnalyzerProps {
   onXpGain: (amount: number) => void;
@@ -59,6 +59,53 @@ const processImage = (file: File): Promise<string> => {
   });
 };
 
+// URL Processing Utility
+const processImageUrl = (url: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    // Essential for Canvas export if the server supports CORS
+    img.crossOrigin = 'Anonymous'; 
+    img.src = url;
+    
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Resize logic (Same as processImage)
+        const MAX_SIZE = 1024;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl);
+      } catch (e) {
+        // This usually happens due to strict CORS (Tainted Canvas)
+        reject(new Error("Security prevented loading this image. The website hosting it doesn't allow external access. Try saving it to your device first."));
+      }
+    };
+    
+    img.onerror = () => {
+      reject(new Error("Could not load image. Check the URL or try a different one."));
+    };
+  });
+};
+
 const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [tone, setTone] = useState<Tone>(Tone.FUN_PLAYFUL);
@@ -66,6 +113,7 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
   const [processingImage, setProcessingImage] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [urlInput, setUrlInput] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -76,14 +124,29 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
         const compressedImage = await processImage(file);
         setSelectedImage(compressedImage);
         setResult(null); // Reset results on new image
+        setUrlInput(''); // Clear URL input
       } catch (error) {
         console.error("Image processing failed:", error);
         alert("Could not load image. Please try a different photo.");
       } finally {
         setProcessingImage(false);
-        // Clear input so same file can be selected again if needed
         if (fileInputRef.current) fileInputRef.current.value = ''; 
       }
+    }
+  };
+
+  const handleUrlLoad = async () => {
+    if (!urlInput.trim()) return;
+    
+    setProcessingImage(true);
+    try {
+      const processedImage = await processImageUrl(urlInput);
+      setSelectedImage(processedImage);
+      setResult(null);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setProcessingImage(false);
     }
   };
 
@@ -139,20 +202,57 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
              <p className="text-gray-300 font-medium">Processing Image...</p>
            </div>
         ) : !selectedImage ? (
-          <div 
-            onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
-          >
-            <Camera className="w-12 h-12 text-gray-400 mb-3" />
-            <p className="text-gray-300 font-medium">Tap to upload photo</p>
-            <p className="text-xs text-gray-500 mt-2">Supports JPG, PNG</p>
+          <div className="flex flex-col gap-4">
+            {/* File Upload Trigger */}
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
+            >
+              <Camera className="w-10 h-10 text-gray-400 mb-2" />
+              <p className="text-gray-300 font-medium">Tap to upload photo</p>
+              <p className="text-xs text-gray-500 mt-1">JPG, PNG, WebP</p>
+            </div>
+
+            {/* Divider */}
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-darkSurface px-2 text-gray-500 font-bold">Or Paste URL</span>
+                </div>
+            </div>
+
+            {/* URL Input */}
+            <div className="flex gap-2">
+                <div className="flex-1 relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                        <LinkIcon className="w-4 h-4" />
+                    </div>
+                    <input 
+                        type="text" 
+                        value={urlInput}
+                        onChange={(e) => setUrlInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleUrlLoad()}
+                        placeholder="https://example.com/image.jpg"
+                        className="w-full bg-black/40 border border-white/10 rounded-xl pl-9 pr-3 py-3 text-sm text-white focus:border-electricBlue focus:outline-none transition-colors placeholder:text-gray-600"
+                    />
+                </div>
+                <button 
+                    onClick={handleUrlLoad}
+                    disabled={!urlInput.trim()}
+                    className="bg-white/10 text-white px-4 rounded-xl hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                    <ArrowRight className="w-5 h-5" />
+                </button>
+            </div>
           </div>
         ) : (
           <div className="relative h-96 w-full rounded-xl overflow-hidden bg-black">
              <img src={selectedImage} alt="Preview" className="w-full h-full object-contain" />
              <button 
-                onClick={() => { setSelectedImage(null); setResult(null); }}
-                className="absolute top-2 right-2 bg-black/60 text-white p-2 rounded-full hover:bg-red-500/80 transition-colors"
+                onClick={() => { setSelectedImage(null); setResult(null); setUrlInput(''); }}
+                className="absolute top-2 right-2 bg-black/60 text-white p-2 rounded-full hover:bg-red-500/80 transition-colors backdrop-blur-sm"
              >
                <RefreshCw className="w-4 h-4" />
              </button>
