@@ -1,5 +1,7 @@
 {
   "name": "BoldTalk",
   "description": "AI-powered social assistant that generates personalized chat-up lines from photos and helps users practice conversation skills.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "camera"
+  ]
 }

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>BoldTalk - Social Confidence AI</title>
     <script>
       // Polyfill process for browser environment to prevent immediate crashes in services
@@ -20,7 +20,7 @@
           const isFileProtocol = window.location.protocol === 'file:';
           
           let title = "⚠️ App Crashed on Start";
-          let message = event.message;
+          let message = event.message || "An unknown error occurred.";
           let tip = "Check console for details.";
 
           if (isFileProtocol) {
@@ -33,14 +33,22 @@
             tip = "Check your internet connection or deployment settings.";
           }
 
-          root.innerHTML = `
-            <div style="color: #ff4fcf; padding: 20px; font-family: monospace; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0f0f1a;">
-              <h2 style="font-size: 20px; margin-bottom: 15px; font-weight: bold;">${title}</h2>
-              <p style="color: white; background: #333; padding: 15px; border-radius: 8px; max-width: 400px; line-height: 1.5;">${message}</p>
-              <p style="color: #4ade80; font-size: 14px; margin-top: 15px; font-weight: bold;">💡 Fix: ${tip}</p>
-              ${!isFileProtocol ? '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #2c1063; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload</button>' : ''}
-            </div>
-          `;
+          // Only replace content if it looks like a startup crash (root is still loading or empty)
+          // to avoid nuking the app on minor runtime errors
+          const isStartup = root.children.length === 0 || root.innerText.includes("Loading BoldTalk");
+          
+          if (isStartup) {
+            root.innerHTML = `
+              <div style="color: #ff4fcf; padding: 20px; font-family: monospace; text-align: center; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #0f0f1a;">
+                <h2 style="font-size: 20px; margin-bottom: 15px; font-weight: bold;">${title}</h2>
+                <p style="color: white; background: #333; padding: 15px; border-radius: 8px; max-width: 400px; line-height: 1.5;">${message}</p>
+                <p style="color: #4ade80; font-size: 14px; margin-top: 15px; font-weight: bold;">💡 Fix: ${tip}</p>
+                ${!isFileProtocol ? '<button onclick="window.location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #2c1063; color: white; border: none; border-radius: 5px; cursor: pointer;">Reload</button>' : ''}
+              </div>
+            `;
+          } else {
+             console.error("Runtime Error:", message);
+          }
         }
       }, true); 
     </script>
@@ -76,6 +84,22 @@
       }
     </script>
     <style>
+      /* FIX: Disable pull-to-refresh and improve touch behavior on mobile */
+      html, body {
+        overscroll-behavior-y: none; /* Disables the standard pull-to-refresh action */
+        overscroll-behavior: none;
+        height: 100%;
+        width: 100%;
+        overflow: hidden; /* Prevent body scroll, let React components handle it */
+        touch-action: pan-x pan-y;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      #root {
+        height: 100%;
+        overflow: hidden;
+      }
+
       /* Custom Scrollbar for sleek look */
       ::-webkit-scrollbar {
         width: 8px;
@@ -89,6 +113,13 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #ff4fcf; 
+      }
+
+      /* Utility class to contain scroll behavior inside components */
+      .custom-scrollbar {
+        overscroll-behavior: contain; /* Stops scroll chaining to parent (body) */
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* Ensures smooth momentum scrolling on iOS */
       }
     </style>
   <script type="importmap">
@@ -104,7 +135,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-950 text-white overflow-hidden">
+  <body class="bg-gray-950 text-white overflow-hidden selection:bg-neonPink selection:text-white">
     <div id="root" class="h-full min-h-screen">
       <!-- Fallback content seen before React loads -->
       <div class="flex items-center justify-center min-h-screen flex-col gap-4">

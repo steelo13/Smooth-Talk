@@ -43,8 +43,8 @@ export const analyzePhoto = async (base64Image: string, tone: Tone): Promise<Ana
   try {
     const ai = getAi();
     
-    // Strip header if present to get pure base64
-    const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+    // Strip header if present to get pure base64 (Handles png, jpeg, webp, etc. case insensitive)
+    const cleanBase64 = base64Image.replace(/^data:image\/\w+;base64,/, "");
 
     const prompt = `Analyze this image of a person. Identify their 'vibe' (style, mood, environment). 
     Generate conversation starters based on visual cues (outfit, setting, expression).

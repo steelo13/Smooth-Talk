@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Tone, AnalysisResult } from '../types';
 import { analyzePhoto } from '../services/geminiService';
-import { Camera, RefreshCw, Copy, Check, Sparkles, MessageCircle, Heart, Lock } from 'lucide-react';
+import { Camera, RefreshCw, Copy, Check, Sparkles, MessageCircle, Heart, Lock, Loader2 } from 'lucide-react';
 
 interface PhotoAnalyzerProps {
   onXpGain: (amount: number) => void;
@@ -17,23 +17,73 @@ const TONE_UNLOCKS: Record<Tone, number> = {
   [Tone.PROFESSIONAL]: 5,
 };
 
+// Image compression utility
+const processImage = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        
+        // Resize to max 1024px dimension to save memory and tokens
+        const MAX_SIZE = 1024;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height *= MAX_SIZE / width;
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width *= MAX_SIZE / height;
+            height = MAX_SIZE;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        // Compress to JPEG with 0.8 quality
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        resolve(dataUrl);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [tone, setTone] = useState<Tone>(Tone.FUN_PLAYFUL);
   const [loading, setLoading] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
+      setProcessingImage(true);
+      try {
+        const compressedImage = await processImage(file);
+        setSelectedImage(compressedImage);
         setResult(null); // Reset results on new image
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Image processing failed:", error);
+        alert("Could not load image. Please try a different photo.");
+      } finally {
+        setProcessingImage(false);
+        // Clear input so same file can be selected again if needed
+        if (fileInputRef.current) fileInputRef.current.value = ''; 
+      }
     }
   };
 
@@ -83,7 +133,12 @@ const PhotoAnalyzer: React.FC<PhotoAnalyzerProps> = ({ onXpGain, userLevel }) =>
           onChange={handleImageUpload}
         />
         
-        {!selectedImage ? (
+        {processingImage ? (
+           <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-600 rounded-xl bg-black/50">
+             <Loader2 className="w-10 h-10 text-electricBlue animate-spin mb-3" />
+             <p className="text-gray-300 font-medium">Processing Image...</p>
+           </div>
+        ) : !selectedImage ? (
           <div 
             onClick={() => fileInputRef.current?.click()}
             className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-600 rounded-xl cursor-pointer hover:bg-white/5 transition-colors"
