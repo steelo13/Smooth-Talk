@@ -169,130 +169,138 @@ const ConfidenceCoach: React.FC<CoachProps> = ({ currentDay, readLessons, onLess
   const daysArray = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
-    <div className="h-full overflow-y-auto px-4 pt-4 pb-24 custom-scrollbar relative">
-      <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
-          <BookOpen className="text-neonPink w-5 h-5" /> 
-          31-Day Confidence Plan
-        </h2>
-        <p className="text-gray-400 text-sm">5 new lessons unlock every 24 hours</p>
-        
-        <div className="mt-4 inline-flex items-center gap-2 bg-darkSurface border border-white/10 px-4 py-2 rounded-full">
-            <Calendar className="w-4 h-4 text-electricBlue" />
-            <span className="text-white font-bold text-sm">Current Day: {currentDay}</span>
+    <div className="flex flex-col h-full relative">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 custom-scrollbar">
+        <div className="mb-6 text-center">
+          <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
+            <BookOpen className="text-neonPink w-5 h-5" /> 
+            31-Day Confidence Plan
+          </h2>
+          <p className="text-gray-400 text-sm">5 new lessons unlock every 24 hours</p>
+          
+          <div className="mt-4 inline-flex items-center gap-2 bg-darkSurface border border-white/10 px-4 py-2 rounded-full">
+              <Calendar className="w-4 h-4 text-electricBlue" />
+              <span className="text-white font-bold text-sm">Current Day: {currentDay}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-8">
-        {daysArray.map((dayNum) => {
-            const isFuture = dayNum > currentDay;
-            const dayLessons = ALL_LESSONS.filter(l => l.day === dayNum);
-            const daysUntil = dayNum - currentDay;
-            
-            return (
-                <div key={dayNum} className={`relative ${isFuture ? 'opacity-50 grayscale' : ''}`}>
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className={`h-px flex-1 ${isFuture ? 'bg-gray-800' : 'bg-gradient-to-r from-transparent to-electricBlue'}`}></div>
-                        <span className={`text-sm font-bold uppercase tracking-widest ${isFuture ? 'text-gray-600' : 'text-electricBlue'}`}>
-                            Day {dayNum}
-                        </span>
-                        <div className={`h-px flex-1 ${isFuture ? 'bg-gray-800' : 'bg-gradient-to-l from-transparent to-electricBlue'}`}></div>
-                    </div>
+        <div className="space-y-8">
+          {daysArray.map((dayNum) => {
+              const isFuture = dayNum > currentDay;
+              const dayLessons = ALL_LESSONS.filter(l => l.day === dayNum);
+              const daysUntil = dayNum - currentDay;
+              
+              return (
+                  <div key={dayNum} className={`relative ${isFuture ? 'opacity-50 grayscale' : ''}`}>
+                      <div className="flex items-center gap-3 mb-4">
+                          <div className={`h-px flex-1 ${isFuture ? 'bg-gray-800' : 'bg-gradient-to-r from-transparent to-electricBlue'}`}></div>
+                          <span className={`text-sm font-bold uppercase tracking-widest ${isFuture ? 'text-gray-600' : 'text-electricBlue'}`}>
+                              Day {dayNum}
+                          </span>
+                          <div className={`h-px flex-1 ${isFuture ? 'bg-gray-800' : 'bg-gradient-to-l from-transparent to-electricBlue'}`}></div>
+                      </div>
 
-                    <div className="space-y-3">
-                        {dayLessons.map((lesson) => (
-                            <div 
-                                key={lesson.id} 
-                                className={`bg-darkSurface border rounded-xl overflow-hidden transition-all ${
-                                    isFuture 
-                                    ? 'border-white/5 cursor-not-allowed' 
-                                    : 'border-white/5 hover:border-neonPink/30'
-                                }`}
-                            >
-                            <button 
-                                onClick={() => handleToggle(lesson.id, isFuture)}
-                                className={`w-full flex items-center justify-between p-4 text-left ${isFuture ? 'cursor-not-allowed' : ''}`}
-                            >
-                                <div className="flex items-center gap-4">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                                    isFuture ? 'bg-white/5 text-gray-600' :
-                                    readLessons.has(lesson.id) ? 'bg-green-500/20 text-green-500' : 'bg-white/5 text-neonPink'
-                                }`}>
-                                    {isFuture ? <Lock className="w-5 h-5"/> : (readLessons.has(lesson.id) ? <CheckCircle className="w-5 h-5"/> : <PlayCircle className="w-5 h-5" />)}
-                                </div>
-                                <div className="min-w-0">
-                                    <h3 className={`font-bold truncate ${isFuture ? 'text-gray-500' : 'text-white'}`}>{lesson.title}</h3>
-                                    <div className="flex gap-2 text-xs text-gray-400 mt-1">
-                                    <span className="bg-white/5 px-2 py-0.5 rounded flex items-center gap-1">
-                                        <Clock className="w-3 h-3" /> {lesson.duration}
-                                    </span>
-                                    <span className={`bg-white/5 px-2 py-0.5 rounded ${isFuture ? 'text-gray-600' : 'text-electricBlue'}`}>
-                                        {lesson.category}
-                                    </span>
-                                    </div>
-                                </div>
-                                </div>
-                                {!isFuture && (
-                                <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${expandedId === lesson.id ? 'rotate-180' : ''}`} />
-                                )}
-                            </button>
-                            
-                            {expandedId === lesson.id && !isFuture && (
-                                <div className="p-4 pt-0 border-t border-white/5 bg-black/20">
-                                <p className="text-gray-300 leading-relaxed text-sm">
-                                    {lesson.content}
-                                </p>
-                                <div className="mt-4 flex justify-end">
-                                    <span className="text-xs text-green-400 flex items-center gap-1">
-                                    <CheckCircle className="w-3 h-3" /> +100 XP
-                                    </span>
-                                </div>
-                                </div>
-                            )}
-                            </div>
-                        ))}
-                    </div>
-                    {isFuture && (
-                         <div className="absolute inset-0 z-10 flex items-center justify-center">
-                            <div className="bg-black/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10 flex items-center gap-2">
-                                <Lock className="w-4 h-4 text-gray-400"/>
-                                <span className="text-xs font-bold text-gray-400">
-                                    {daysUntil === 1 ? `Unlocks in ${timeUntilNextDay || '24h'}` : `Available in ${daysUntil} days`}
-                                </span>
-                            </div>
-                         </div>
-                    )}
-                </div>
-            );
-        })}
-      </div>
+                      <div className="space-y-3">
+                          {dayLessons.map((lesson) => (
+                              <div 
+                                  key={lesson.id} 
+                                  className={`bg-darkSurface border rounded-xl overflow-hidden transition-all ${
+                                      isFuture 
+                                      ? 'border-white/5 cursor-not-allowed' 
+                                      : 'border-white/5 hover:border-neonPink/30'
+                                  }`}
+                              >
+                              <button 
+                                  onClick={() => handleToggle(lesson.id, isFuture)}
+                                  className={`w-full flex items-center justify-between p-4 text-left ${isFuture ? 'cursor-not-allowed' : ''}`}
+                              >
+                                  <div className="flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                                      isFuture ? 'bg-white/5 text-gray-600' :
+                                      readLessons.has(lesson.id) ? 'bg-green-500/20 text-green-500' : 'bg-white/5 text-neonPink'
+                                  }`}>
+                                      {isFuture ? <Lock className="w-5 h-5"/> : (readLessons.has(lesson.id) ? <CheckCircle className="w-5 h-5"/> : <PlayCircle className="w-5 h-5" />)}
+                                  </div>
+                                  <div className="min-w-0">
+                                      <h3 className={`font-bold truncate ${isFuture ? 'text-gray-500' : 'text-white'}`}>{lesson.title}</h3>
+                                      <div className="flex gap-2 text-xs text-gray-400 mt-1">
+                                      <span className="bg-white/5 px-2 py-0.5 rounded flex items-center gap-1">
+                                          <Clock className="w-3 h-3" /> {lesson.duration}
+                                      </span>
+                                      <span className={`bg-white/5 px-2 py-0.5 rounded ${isFuture ? 'text-gray-600' : 'text-electricBlue'}`}>
+                                          {lesson.category}
+                                      </span>
+                                      </div>
+                                  </div>
+                                  </div>
+                                  {!isFuture && (
+                                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${expandedId === lesson.id ? 'rotate-180' : ''}`} />
+                                  )}
+                              </button>
+                              
+                              {expandedId === lesson.id && !isFuture && (
+                                  <div className="p-4 pt-0 border-t border-white/5 bg-black/20">
+                                  <p className="text-gray-300 leading-relaxed text-sm">
+                                      {lesson.content}
+                                  </p>
+                                  <div className="mt-4 flex justify-end">
+                                      <span className="text-xs text-green-400 flex items-center gap-1">
+                                      <CheckCircle className="w-3 h-3" /> +100 XP
+                                      </span>
+                                  </div>
+                                  </div>
+                              )}
+                              </div>
+                          ))}
+                      </div>
+                      {isFuture && (
+                           <div className="absolute inset-0 z-10 flex items-center justify-center">
+                              <div className="bg-black/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-white/10 flex items-center gap-2">
+                                  <Lock className="w-4 h-4 text-gray-400"/>
+                                  <span className="text-xs font-bold text-gray-400">
+                                      {daysUntil === 1 ? `Unlocks in ${timeUntilNextDay || '24h'}` : `Available in ${daysUntil} days`}
+                                  </span>
+                              </div>
+                           </div>
+                      )}
+                  </div>
+              );
+          })}
+        </div>
 
-      {/* Debug Tools */}
-      <div className="mt-12 pt-8 border-t border-white/5 text-center">
-        <button 
-            onClick={() => setDebugMode(!debugMode)}
-            className="text-[10px] text-gray-600 uppercase hover:text-gray-400"
-        >
-            {debugMode ? 'Hide Debug Tools' : 'Developer Options'}
-        </button>
+        {/* Debug Tools */}
+        <div className="mt-12 pt-8 border-t border-white/5 text-center">
+          <button 
+              onClick={() => setDebugMode(!debugMode)}
+              className="text-[10px] text-gray-600 uppercase hover:text-gray-400"
+          >
+              {debugMode ? 'Hide Debug Tools' : 'Developer Options'}
+          </button>
+          
+          {debugMode && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                  <button 
+                      onClick={onAdvanceDay}
+                      className="bg-white/5 text-xs text-electricBlue py-2 rounded hover:bg-white/10 flex items-center justify-center gap-1"
+                  >
+                      <Zap className="w-3 h-3" /> Fast Forward 24h
+                  </button>
+                  <button 
+                      onClick={onReset}
+                      className="bg-white/5 text-xs text-red-400 py-2 rounded hover:bg-white/10"
+                  >
+                      Reset Progress
+                  </button>
+              </div>
+          )}
+        </div>
         
-        {debugMode && (
-            <div className="mt-4 grid grid-cols-2 gap-2">
-                <button 
-                    onClick={onAdvanceDay}
-                    className="bg-white/5 text-xs text-electricBlue py-2 rounded hover:bg-white/10 flex items-center justify-center gap-1"
-                >
-                    <Zap className="w-3 h-3" /> Fast Forward 24h
-                </button>
-                <button 
-                    onClick={onReset}
-                    className="bg-white/5 text-xs text-red-400 py-2 rounded hover:bg-white/10"
-                >
-                    Reset Progress
-                </button>
-            </div>
-        )}
+        {/* Padding for visual comfort at bottom of list */}
+        <div className="h-4"></div>
       </div>
+
+      {/* Spacer for Fixed Navigation (approx 96px) so scrollbar stops above it */}
+      <div className="h-24 shrink-0 pointer-events-none"></div>
     </div>
   );
 };
