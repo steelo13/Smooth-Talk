@@ -74,7 +74,7 @@ const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({ onUpgrade, onClose }) =
             <div className="flex items-baseline justify-center gap-1 mb-4 mt-2">
               <span className="text-lg text-gray-400">£</span>
               <span className="text-4xl font-bold text-white tracking-tight">7.99</span>
-              <span className="text-gray-500 text-sm font-medium">/ lifetime</span>
+              <span className="text-gray-500 text-sm font-medium">/ month</span>
             </div>
 
             <ul className="space-y-3 mb-6">
@@ -112,12 +112,6 @@ const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({ onUpgrade, onClose }) =
             <div className="flex items-center justify-center gap-2 mt-3 text-[10px] text-gray-500">
                <Shield className="w-3 h-3" /> Secure payment via Stripe
             </div>
-          </div>
-
-          <div className="text-center">
-             <button onClick={onUpgrade} className="text-xs text-gray-600 underline hover:text-gray-400">
-                Restore Purchases
-             </button>
           </div>
         </div>
       </div>
