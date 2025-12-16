@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Scenario, Message } from '../types';
 import { simulateChatResponse } from '../services/geminiService';
-import { Send, User, Bot, Award, ChevronLeft, MessageCircle, Lock } from 'lucide-react';
+import PremiumUpgrade from './PremiumUpgrade';
+import { Send, User, Bot, Award, ChevronLeft, MessageCircle, Lock, Crown } from 'lucide-react';
 
 interface IcebreakerLabProps {
   onXpGain: (amount: number) => void;
   userLevel: number;
+  isPremium?: boolean;
+  onUnlockPremium?: () => void;
 }
 
 const SCENARIOS: Scenario[] = [
@@ -41,20 +44,12 @@ const SCENARIOS: Scenario[] = [
   { id: 'laundromat', title: 'Laundromat', description: 'Waiting for the spin cycle to finish.', difficulty: 'Medium', icon: '🧺' },
 ];
 
-const getScenarioUnlockLevel = (difficulty: 'Easy' | 'Medium' | 'Hard') => {
-  switch(difficulty) {
-    case 'Easy': return 1;
-    case 'Medium': return 3;
-    case 'Hard': return 5;
-    default: return 1;
-  }
-};
-
-const IcebreakerLab: React.FC<IcebreakerLabProps> = ({ onXpGain, userLevel }) => {
+const IcebreakerLab: React.FC<IcebreakerLabProps> = ({ onXpGain, userLevel, isPremium = false, onUnlockPremium }) => {
   const [activeScenario, setActiveScenario] = useState<Scenario | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -95,37 +90,61 @@ const IcebreakerLab: React.FC<IcebreakerLabProps> = ({ onXpGain, userLevel }) =>
     if (e.key === 'Enter') handleSendMessage();
   };
 
+  const handleScenarioClick = (scenario: Scenario, isLocked: boolean) => {
+    if (isLocked) {
+      setShowPaywall(true);
+    } else {
+      startScenario(scenario);
+    }
+  };
+
   if (!activeScenario) {
     return (
-      <div className="h-full overflow-y-auto p-4 pb-24 custom-scrollbar">
+      <div className="h-full overflow-y-auto p-4 pb-24 custom-scrollbar relative">
+        {/* Render Paywall Overlay if triggered */}
+        {showPaywall && (
+          <PremiumUpgrade 
+            onUpgrade={() => {
+              if (onUnlockPremium) onUnlockPremium();
+              setShowPaywall(false);
+            }} 
+            onClose={() => setShowPaywall(false)}
+          />
+        )}
+
         <div className="mb-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
             <MessageCircle className="text-electricBlue w-5 h-5" /> 
             Icebreaker Lab
+            {isPremium && <span className="bg-yellow-500 text-black text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ml-1">Premium</span>}
             </h2>
             <p className="text-gray-400 text-sm">Practice your skills in safe scenarios</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {SCENARIOS.map((scenario) => {
-            const unlockLevel = getScenarioUnlockLevel(scenario.difficulty);
-            const isLocked = userLevel < unlockLevel;
+            // Lock EVERYTHING if not premium, except maybe a few demo ones? 
+            // The request said "make all tabs upgrade to premium", so we lock all or almost all.
+            // Let's lock everything except the first one for a teaser, or strictly follow "upgrade".
+            // We will lock ALL for maximum conversion focus as per request.
+            const isLocked = !isPremium;
             
             return (
               <button
                 key={scenario.id}
-                onClick={() => !isLocked && startScenario(scenario)}
-                disabled={isLocked}
+                onClick={() => handleScenarioClick(scenario, isLocked)}
                 className={`border rounded-2xl p-6 text-left transition-all relative overflow-hidden group
                   ${isLocked 
-                    ? 'bg-darkSurface/50 border-white/5 opacity-75 cursor-not-allowed' 
+                    ? 'bg-darkSurface/50 border-white/5 opacity-75' 
                     : 'bg-darkSurface border-white/5 hover:border-electricBlue hover:scale-[1.02]'
                   }`}
               >
                 {isLocked && (
                   <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center backdrop-blur-[2px]">
-                    <Lock className="w-8 h-8 text-gray-500 mb-2" />
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Unlocks Lvl {unlockLevel}</span>
+                    <Lock className="w-8 h-8 text-yellow-500 mb-2" />
+                    <span className="text-xs font-bold text-white uppercase tracking-widest bg-black/50 px-2 py-1 rounded border border-yellow-500/50">
+                      Premium Only
+                    </span>
                   </div>
                 )}
                 

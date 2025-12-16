@@ -3,7 +3,8 @@ import Navigation from './components/Navigation';
 import PhotoAnalyzer from './components/PhotoAnalyzer';
 import IcebreakerLab from './components/IcebreakerLab';
 import ConfidenceCoach from './components/ConfidenceCoach';
-import { Zap, Trophy, Lock, Unlock, CheckCircle } from 'lucide-react';
+import PremiumUpgrade from './components/PremiumUpgrade';
+import { Zap, Trophy, Lock, Unlock, CheckCircle, Crown } from 'lucide-react';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('generate');
@@ -13,6 +14,7 @@ const App: React.FC = () => {
   const [level, setLevel] = useState(1);
   const [readLessons, setReadLessons] = useState<Set<string>>(new Set());
   const [currentDay, setCurrentDay] = useState(1);
+  const [isPremium, setIsPremium] = useState(false);
   
   // XP required per level (Fixed at 500 to ensure 1 level up per completed day)
   const xpToNextLevel = 500;
@@ -26,9 +28,11 @@ const App: React.FC = () => {
         const savedLevel = localStorage.getItem('boldtalk_level');
         const savedRead = localStorage.getItem('boldtalk_read_lessons');
         const savedStart = localStorage.getItem('boldtalk_start_date');
+        const savedPremium = localStorage.getItem('boldtalk_premium');
 
         if (savedXp) setXp(parseInt(savedXp));
         if (savedLevel) setLevel(parseInt(savedLevel));
+        if (savedPremium === 'true') setIsPremium(true);
         if (savedRead) {
             const parsed = JSON.parse(savedRead);
             if (Array.isArray(parsed)) {
@@ -66,6 +70,10 @@ const App: React.FC = () => {
     localStorage.setItem('boldtalk_level', level.toString());
   }, [level]);
 
+  useEffect(() => {
+    localStorage.setItem('boldtalk_premium', isPremium.toString());
+  }, [isPremium]);
+
   const handleXpGain = (amount: number) => {
     const newXp = xp + amount;
     if (newXp >= xpToNextLevel) {
@@ -89,6 +97,10 @@ const App: React.FC = () => {
     }
   };
 
+  const handleUpgrade = () => {
+    setIsPremium(true);
+  };
+
   // Debug tool to fast forward time (Passed to Coach or used here)
   const advanceDay = () => {
     const savedStart = localStorage.getItem('boldtalk_start_date');
@@ -106,10 +118,12 @@ const App: React.FC = () => {
         localStorage.removeItem('boldtalk_read_lessons');
         localStorage.removeItem('boldtalk_xp');
         localStorage.removeItem('boldtalk_level');
+        localStorage.removeItem('boldtalk_premium');
         setReadLessons(new Set());
         setXp(0);
         setLevel(1);
         setCurrentDay(1);
+        setIsPremium(false);
       }
   };
 
@@ -131,7 +145,15 @@ const App: React.FC = () => {
       case 'generate':
         return <PhotoAnalyzer onXpGain={handleXpGain} userLevel={level} />;
       case 'lab':
-        return <IcebreakerLab onXpGain={handleXpGain} userLevel={level} />;
+        // Modified: Pass handler instead of blocking, so users can see the content to buy
+        return (
+          <IcebreakerLab 
+             onXpGain={handleXpGain} 
+             userLevel={level} 
+             isPremium={isPremium} 
+             onUnlockPremium={handleUpgrade}
+          />
+        );
       case 'coach':
         return (
           <ConfidenceCoach 
@@ -155,7 +177,9 @@ const App: React.FC = () => {
                </div>
              </div>
              
-             <h2 className="text-2xl font-bold text-white">Social Master</h2>
+             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                Social Master {isPremium && <Crown className="w-5 h-5 text-yellow-400 fill-yellow-400" />}
+             </h2>
              <p className="text-gray-400 text-sm mt-4 max-w-xs">
                Day {currentDay} of your confidence journey.
              </p>
@@ -196,6 +220,15 @@ const App: React.FC = () => {
                  </span>
                </div>
              </div>
+
+             {!isPremium && (
+                <button 
+                  onClick={() => setActiveTab('lab')}
+                  className="mt-6 w-full max-w-xs py-3 bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-bold rounded-xl"
+                >
+                  Upgrade to Premium
+                </button>
+             )}
           </div>
         );
       default:
