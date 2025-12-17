@@ -32,7 +32,12 @@ const App: React.FC = () => {
 
         if (savedXp) setXp(parseInt(savedXp));
         if (savedLevel) setLevel(parseInt(savedLevel));
-        if (savedPremium === 'true') setIsPremium(true);
+        
+        // Check local storage for premium status
+        if (savedPremium === 'true') {
+            setIsPremium(true);
+        }
+
         if (savedRead) {
             const parsed = JSON.parse(savedRead);
             if (Array.isArray(parsed)) {
@@ -56,6 +61,20 @@ const App: React.FC = () => {
                 setCurrentDay(Math.min(diffDays, 31));
             }
         }
+
+        // --- PAYMENT CONFIRMATION LOGIC ---
+        // Check for 'success=true' parameter returned from Stripe
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success') === 'true' || urlParams.get('payment_success') === 'true') {
+            console.log("Payment success detected via URL parameter.");
+            setIsPremium(true);
+            localStorage.setItem('boldtalk_premium', 'true');
+            alert("🎉 Payment Successful! Premium features have been unlocked.");
+            
+            // Clean the URL so refreshing doesn't re-trigger alert
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
     } catch (e) {
         console.error("Error loading state", e);
     }

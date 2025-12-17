@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, Star, Shield, Lock, CreditCard, Sparkles, Zap, X } from 'lucide-react';
+import { Check, Star, Shield, Zap, X } from 'lucide-react';
 
 interface PremiumUpgradeProps {
   onUpgrade: () => void;
@@ -9,37 +9,12 @@ interface PremiumUpgradeProps {
 const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({ onUpgrade, onClose }) => {
   const [loading, setLoading] = useState(false);
 
-  const handlePurchase = async () => {
+  const handlePurchase = () => {
     setLoading(true);
-    
-    // --- STRIPE CHECKOUT INTEGRATION ---
-    try {
-      // 1. In a real app, initialize Stripe with your Publishable Key
-      // const stripe = window.Stripe('pk_test_YOUR_PUBLISHABLE_KEY');
-
-      // 2. Call your backend to create a Checkout Session
-      // const response = await fetch('/api/create-checkout-session', { method: 'POST' });
-      // const session = await response.json();
-
-      // 3. Redirect to Stripe Checkout
-      // const result = await stripe.redirectToCheckout({ sessionId: session.id });
-      // if (result.error) alert(result.error.message);
-      
-      console.log("Stripe Checkout Initiated");
-      
-      // SIMULATION FOR DEMO:
-      setTimeout(() => {
-        setLoading(false);
-        onUpgrade();
-        alert("Payment Successful! Welcome to BoldTalk Premium.");
-        if (onClose) onClose();
-      }, 1500);
-
-    } catch (error) {
-      console.error("Payment failed", error);
-      setLoading(false);
-      alert("Payment failed. Please try again.");
-    }
+    // Redirect the user to the provided Stripe Payment Link.
+    // NOTE: Configure your Stripe Payment Link to redirect back to this app with '?success=true'
+    // in the "After payment" settings on the Stripe Dashboard.
+    window.location.href = 'https://buy.stripe.com/9B68wR5Y2dJdguW3aEes001';
   };
 
   return (
@@ -100,7 +75,7 @@ const PremiumUpgrade: React.FC<PremiumUpgradeProps> = ({ onUpgrade, onClose }) =
               {loading ? (
                 <div className="flex items-center gap-2">
                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                   Connecting Stripe...
+                   Redirecting...
                 </div>
               ) : (
                 <>
